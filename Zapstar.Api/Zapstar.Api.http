@@ -1,0 +1,6 @@
+@Zapstar.Api_HostAddress = http://localhost:5183
+
+GET {{Zapstar.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
