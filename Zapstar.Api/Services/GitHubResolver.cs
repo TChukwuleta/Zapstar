@@ -6,17 +6,16 @@ namespace Zapstar.Api.Services;
 
 public interface IGitHubResolver
 {
-    Task<TipTarget> ResolveRepoAsync(string owner, string repo, CancellationToken ct);
-    Task<TipTarget> ResolveUserAsync(string username, CancellationToken ct);
+    Task<TipTarget> ResolveRepo(string owner, string repo, CancellationToken ct);
+    Task<TipTarget> ResolveUser(string username, CancellationToken ct);
 }
 
-public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemoryCache cache, ILogger<GitHubResolver> logger)
-    : IGitHubResolver
+public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemoryCache cache, ILogger<GitHubResolver> logger) : IGitHubResolver
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(6);
     private static readonly string[] CandidateBranches = ["main", "master"];
 
-    public async Task<TipTarget> ResolveRepoAsync(string owner, string repo, CancellationToken ct)
+    public async Task<TipTarget> ResolveRepo(string owner, string repo, CancellationToken ct)
     {
         var cacheKey = $"repo:{owner}/{repo}";
         if (cache.TryGetValue(cacheKey, out TipTarget? cached) && cached is not null)
@@ -27,7 +26,7 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
         return result;
     }
 
-    public async Task<TipTarget> ResolveUserAsync(string username, CancellationToken ct)
+    public async Task<TipTarget> ResolveUser(string username, CancellationToken ct)
     {
         var cacheKey = $"user:{username}";
         if (cache.TryGetValue(cacheKey, out TipTarget? cached) && cached is not null)

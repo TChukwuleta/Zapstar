@@ -8,7 +8,7 @@ public static class TipTargetEndpoints
     {
         app.MapGet("/repo/{owner}/{repo}", async (string owner, string repo, IGitHubResolver resolver, CancellationToken ct) =>
         {
-            var result = await resolver.ResolveRepoAsync(owner, repo, ct);
+            var result = await resolver.ResolveRepo(owner, repo, ct);
             return Results.Ok(result);
         })
         .WithName("ResolveRepo")
@@ -16,7 +16,7 @@ public static class TipTargetEndpoints
 
         app.MapGet("/user/{username}", async (string username, IGitHubResolver resolver, CancellationToken ct) =>
         {
-            var result = await resolver.ResolveUserAsync(username, ct);
+            var result = await resolver.ResolveUser(username, ct);
             return Results.Ok(result);
         })
         .WithName("ResolveUser")
