@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using System.Net;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -46,59 +43,39 @@ public class GitHubResolverTests
     }
 
     [Fact]
-    public async Task ResolveRepoAsync_ReturnsFalse_WhenCandidateFailsLnurlValidation()
+    public async Task ResolveRepo_ReturnsFalse_WhenCandidateFailsLnurlValidation()
     {
-        // Simulates the email-vs-Lightning-Address bug fix: a plain email in FUNDING.yml
-        // should not be trusted just because it's present in the file.
-        var handler = new FakeHttpMessageHandler().When(
-            "raw.githubusercontent.com/owner/repo/main/.github/FUNDING.yml",
-            HttpStatusCode.OK, "lightning: not-really-lightning@gmail.com");
-
+        var handler = new FakeHttpMessageHandler().When("raw.githubusercontent.com/owner/repo/main/.github/FUNDING.yml", HttpStatusCode.OK, "lightning: not-really-lightning@gmail.com");
         var lnurlResolver = Substitute.For<ILnurlResolver>();
-        lnurlResolver.IsValidLightningAddress("not-really-lightning@gmail.com", Arg.Any<CancellationToken>())
-            .Returns(false);
-
+        lnurlResolver.IsValidLightningAddress("not-really-lightning@gmail.com", Arg.Any<CancellationToken>()).Returns(false);
         var resolver = BuildResolver(handler, lnurlResolver);
         var result = await resolver.ResolveRepo("owner", "repo", CancellationToken.None);
-
         Assert.False(result.HasLightning);
     }
 
     [Fact]
-    public async Task ResolveRepoAsync_CachesResult_SoSecondCallDoesNotHitHttpAgain()
+    public async Task ResolveRepo_CachesResult_SoSecondCallDoesNotHitHttpAgain()
     {
         var callCount = 0;
-        var handler = new FakeHttpMessageHandler().When(
-            "raw.githubusercontent.com/owner/repo/main/.github/FUNDING.yml",
-            HttpStatusCode.OK, "lightning: tobses@btcpay.example.com");
-
+        var handler = new FakeHttpMessageHandler().When("raw.githubusercontent.com/owner/repo/main/.github/FUNDING.yml", HttpStatusCode.OK, "lightning: tobses@btcpay.example.com");
         var lnurlResolver = Substitute.For<ILnurlResolver>();
-        lnurlResolver.IsValidLightningAddress(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(_ => { callCount++; return Task.FromResult(true); });
-
+        lnurlResolver.IsValidLightningAddress(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(_ => { callCount++; return Task.FromResult(true); });
         var resolver = BuildResolver(handler, lnurlResolver);
-
         await resolver.ResolveRepo("owner", "repo", CancellationToken.None);
         await resolver.ResolveRepo("owner", "repo", CancellationToken.None);
-
-        Assert.Equal(1, callCount); // second call should hit cache, not re-validate
+        Assert.Equal(1, callCount);
     }
 
     [Fact]
-    public async Task ResolveUserAsync_FallsBackToProfileReadme_WhenBioHasNoValidAddress()
+    public async Task ResolveUser_FallsBackToProfileReadme_WhenBioHasNoValidAddress()
     {
-        var handler = new FakeHttpMessageHandler()
-            .When("api.github.com/users/tobses", HttpStatusCode.OK, """{"bio":"just a dev, no ln address"}""")
-            .When("raw.githubusercontent.com/tobses/tobses/main/README.md", HttpStatusCode.OK,
-                "Hi, tip me at ⚡ tobses@btcpay.example.com");
+        var handler = new FakeHttpMessageHandler().When("api.github.com/users/tobses", HttpStatusCode.OK, """{"bio":"just a dev, no ln address"}""")
+            .When("raw.githubusercontent.com/tobses/tobses/main/README.md", HttpStatusCode.OK, "Hi, tip me at ⚡ tobses@btcpay.example.com");
 
         var lnurlResolver = Substitute.For<ILnurlResolver>();
-        lnurlResolver.IsValidLightningAddress("tobses@btcpay.example.com", Arg.Any<CancellationToken>())
-            .Returns(true);
-
+        lnurlResolver.IsValidLightningAddress("tobses@btcpay.example.com", Arg.Any<CancellationToken>()).Returns(true);
         var resolver = BuildResolver(handler, lnurlResolver);
         var result = await resolver.ResolveUser("tobses", CancellationToken.None);
-
         Assert.True(result.HasLightning);
         Assert.Equal("profile-readme", result.Source);
     }
