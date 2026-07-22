@@ -26,12 +26,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
-
-      - name: Publish test results
-        if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: Test Results
-          path: 'TestResults/*.trx'
-          reporter: dotnet-trx
+        run: dotnet test --no-build --configuration Release
