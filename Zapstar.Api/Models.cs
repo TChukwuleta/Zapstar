@@ -24,13 +24,14 @@ public record LnurlPayResponse
 public record LnurlInvoiceResponse
 {
     public string Pr { get; init; } = default!;
+    public string? Verify { get; init; }
     public string? Status { get; init; }
     public string? Reason { get; init; }
 }
 
 public record InvoiceRequest
 {
-    public string Address { get; init; } = default!; // e.g. "user@getalby.com"
+    public string Address { get; init; } = default!; 
     public long AmountSats { get; init; }
     public string? Comment { get; init; }
 }
@@ -38,6 +39,13 @@ public record InvoiceRequest
 public record InvoiceResult
 {
     public bool Success { get; init; }
-    public string? Invoice { get; init; } 
+    public string? Invoice { get; init; }
+    public string? VerifyUrl { get; init; }
+    public string? Error { get; init; }
+}
+
+public record PaymentStatusResult
+{
+    public bool Settled { get; init; }
     public string? Error { get; init; }
 }

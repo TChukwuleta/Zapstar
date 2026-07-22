@@ -1,5 +1,9 @@
 (function () {
   const PRESET_AMOUNTS = [1000, 5000, 21000];
+  const POLL_INTERVAL_MS = 3000;
+  const POLL_TIMEOUT_MS = 3 * 60 * 1000;
+
+  let activePollTimer = null;
 
   function sendMessage(type, payload) {
     return new Promise((resolve, reject) => {
@@ -11,7 +15,15 @@
     });
   }
 
+  function stopPolling() {
+    if (activePollTimer) {
+      clearInterval(activePollTimer);
+      activePollTimer = null;
+    }
+  }
+
   function closeModal() {
+    stopPolling();
     document.querySelector(".zs-modal-overlay")?.remove();
   }
 
@@ -23,7 +35,67 @@
     container.appendChild(img);
   }
 
+  function renderAmountPicker(target, body) {
+    body.innerHTML = "";
+
+    const presetRow = document.createElement("div");
+    presetRow.className = "zs-preset-row";
+    for (const amount of PRESET_AMOUNTS) {
+      const btn = document.createElement("button");
+      btn.className = "zs-preset-btn";
+      btn.textContent = `${amount.toLocaleString()} sats`;
+      btn.addEventListener("click", () => handleAmountSubmit(target, amount, body));
+      presetRow.appendChild(btn);
+    }
+    body.appendChild(presetRow);
+
+    const customRow = document.createElement("div");
+    customRow.className = "zs-custom-row";
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "1";
+    input.placeholder = "Custom amount (sats)";
+    const customBtn = document.createElement("button");
+    customBtn.className = "zs-preset-btn";
+    customBtn.textContent = "Zap";
+    customBtn.addEventListener("click", () => {
+      const value = parseInt(input.value, 10);
+      if (value > 0) handleAmountSubmit(target, value, body);
+    });
+    customRow.appendChild(input);
+    customRow.appendChild(customBtn);
+    body.appendChild(customRow);
+  }
+
+  function startPollingForPayment(verifyUrl, target, body) {
+    const startedAt = Date.now();
+
+    activePollTimer = setInterval(async () => {
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        stopPolling();
+        return; 
+      }
+
+      try {
+        const status = await sendMessage("CHECK_INVOICE_STATUS", { verifyUrl });
+        if (status.settled) {
+          stopPolling();
+
+          body.innerHTML = `<p class="zs-status">⚡ Payment received! Thank you.</p>`;
+          setTimeout(() => {
+            if (document.querySelector(".zs-modal-overlay")) {
+              renderAmountPicker(target, body);
+            }
+          }, 2000);
+        }
+      } catch (err) {
+        console.debug("[Zapstar] payment status check failed:", err.message);
+      }
+    }, POLL_INTERVAL_MS);
+  }
+
   async function handleAmountSubmit(target, amountSats, modalBody) {
+    stopPolling();
     modalBody.innerHTML = `<p class="zs-status">Requesting invoice…</p>`;
 
     try {
@@ -60,8 +132,23 @@
 
       const note = document.createElement("p");
       note.className = "zs-note";
-      note.textContent = "Scan or open in your Lightning wallet to complete the zap.";
-      modalBody.appendChild(note);
+
+      if (result.verifyUrl) {
+        note.textContent = "Scan or open in your Lightning wallet - we'll detect the payment automatically.";
+        modalBody.appendChild(note);
+        startPollingForPayment(result.verifyUrl, target, modalBody);
+      } else {
+        // Wallet doesn't support LUD-21 verify - no way to auto-detect, so give the
+        // person a manual way to acknowledge payment and reset the modal themselves.
+        note.textContent = "Scan or open in your Lightning wallet to complete the zap.";
+        modalBody.appendChild(note);
+
+        const doneBtn = document.createElement("button");
+        doneBtn.className = "zs-copy-btn";
+        doneBtn.textContent = "I've Paid";
+        doneBtn.addEventListener("click", () => renderAmountPicker(target, modalBody));
+        modalBody.appendChild(doneBtn);
+      }
     } catch (err) {
       modalBody.innerHTML = `<p class="zs-status zs-error">${err.message}</p>`;
     }
@@ -91,36 +178,9 @@
 
     const body = document.createElement("div");
     body.className = "zs-modal-body";
-
-    const presetRow = document.createElement("div");
-    presetRow.className = "zs-preset-row";
-    for (const amount of PRESET_AMOUNTS) {
-      const btn = document.createElement("button");
-      btn.className = "zs-preset-btn";
-      btn.textContent = `${amount.toLocaleString()} sats`;
-      btn.addEventListener("click", () => handleAmountSubmit(target, amount, body));
-      presetRow.appendChild(btn);
-    }
-    body.appendChild(presetRow);
-
-    const customRow = document.createElement("div");
-    customRow.className = "zs-custom-row";
-    const input = document.createElement("input");
-    input.type = "number";
-    input.min = "1";
-    input.placeholder = "Custom amount (sats)";
-    const customBtn = document.createElement("button");
-    customBtn.className = "zs-preset-btn";
-    customBtn.textContent = "Zap";
-    customBtn.addEventListener("click", () => {
-      const value = parseInt(input.value, 10);
-      if (value > 0) handleAmountSubmit(target, value, body);
-    });
-    customRow.appendChild(input);
-    customRow.appendChild(customBtn);
-    body.appendChild(customRow);
-
+    renderAmountPicker(target, body);
     modal.appendChild(body);
+
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
   }
