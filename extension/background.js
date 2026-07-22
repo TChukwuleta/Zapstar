@@ -39,6 +39,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse({ ok: true, data });
           break;
         }
+        case "CHECK_INVOICE_STATUS": {
+          const { verifyUrl } = message.payload;
+          const data = await apiGet(`/invoice/status?verifyUrl=${encodeURIComponent(verifyUrl)}`);
+          sendResponse({ ok: true, data });
+          break;
+        }
         default:
           sendResponse({ ok: false, error: `Unknown message type: ${message.type}` });
       }

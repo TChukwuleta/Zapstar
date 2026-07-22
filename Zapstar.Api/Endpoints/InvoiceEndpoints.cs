@@ -11,7 +11,6 @@ public static class InvoiceEndpoints
             if (string.IsNullOrWhiteSpace(req.Address) || req.AmountSats <= 0)
                 return Results.BadRequest(new { error = "A valid address and positive amountSats are required." });
 
-            // Simple sanity cap - adjust as needed. Prevents accidental/malicious huge invoice requests.
             if (req.AmountSats > 1_000_000)
                 return Results.BadRequest(new { error = "Amount exceeds maximum allowed (1,000,000 sats)." });
 
@@ -20,6 +19,18 @@ public static class InvoiceEndpoints
         })
         .WithName("CreateInvoice")
         .Produces<InvoiceResult>(200)
+        .Produces(400);
+
+        app.MapGet("/invoice/status", async (string verifyUrl, ILnurlResolver resolver, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(verifyUrl))
+                return Results.BadRequest(new { error = "verifyUrl is required." });
+
+            var result = await resolver.CheckPaymentStatus(verifyUrl, ct);
+            return Results.Ok(result);
+        })
+        .WithName("CheckInvoiceStatus")
+        .Produces<PaymentStatusResult>(200)
         .Produces(400);
     }
 }

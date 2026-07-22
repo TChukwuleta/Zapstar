@@ -6,6 +6,7 @@ public interface ILnurlResolver
 {
     Task<bool> IsValidLightningAddress(string candidateAddress, CancellationToken ct);
     Task<InvoiceResult> GetInvoice(string lightningAddress, long amountSats, string? comment, CancellationToken ct);
+    Task<PaymentStatusResult> CheckPaymentStatus(string verifyUrl, CancellationToken ct);
 }
 
 
@@ -59,6 +60,27 @@ public class LnurlResolver(HttpClient http, ILogger<LnurlResolver> logger) : ILn
     {
         var payParams = await TryResolvePayParams(candidateAddress, ct);
         return payParams is not null && string.Equals(payParams.Tag, "payRequest", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(payParams.Callback);
+    }
+
+
+    public async Task<PaymentStatusResult> CheckPaymentStatus(string verifyUrl, CancellationToken ct)
+    {
+        try
+        {
+            var resp = await http.GetAsync(verifyUrl, ct);
+            if (!resp.IsSuccessStatusCode)
+                return new PaymentStatusResult { Settled = false, Error = $"Verify endpoint returned {(int)resp.StatusCode}." };
+
+            using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
+            var root = doc.RootElement;
+            var settled = root.TryGetProperty("settled", out var settledEl) && settledEl.GetBoolean();
+            return new PaymentStatusResult { Settled = settled };
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Verify check failed for {VerifyUrl}", verifyUrl);
+            return new PaymentStatusResult { Settled = false, Error = "Could not check payment status." };
+        }
     }
 
     private async Task<LnurlPayResponse?> TryResolvePayParams(string address, CancellationToken ct)
