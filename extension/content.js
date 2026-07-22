@@ -1,6 +1,3 @@
-// Detects whether we're on a repo page or a user profile page, asks the
-// background worker to resolve a tip target, and injects a zap button if one exists.
-
 function sendMessage(type, payload) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ type, payload }, (response) => {
@@ -117,14 +114,8 @@ function run() {
 
 run();
 
-// GitHub uses Turbo (Hotwire) for navigation - clicking around the site swaps content
-// in place rather than doing full page reloads, so a plain page-load listener only
-// catches the very first visit. GitHub itself fires "turbo:load" on document after
-// every navigation finishes rendering - that's the reliable hook to re-run on, rather
-// than guessing with a timeout after spotting a URL change.
 document.addEventListener("turbo:load", run);
 
-// Kept as a fallback for the rare case Turbo isn't involved (e.g. a non-Turbo redirect).
 let lastPath = window.location.pathname;
 new MutationObserver(() => {
   if (window.location.pathname !== lastPath) {
