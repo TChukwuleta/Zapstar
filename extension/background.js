@@ -1,13 +1,20 @@
-const API_BASE = "http://localhost:5183"; // swap to https://api.zapstar.app in production
+const DEFAULT_API_BASE = "https://api.zapstar.net";
+
+async function getApiBase() {
+  const stored = await chrome.storage.local.get("apiBase");
+  return stored.apiBase || DEFAULT_API_BASE;
+}
 
 async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`);
+  const apiBase = await getApiBase();
+  const res = await fetch(`${apiBase}${path}`);
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
 }
 
 async function apiPost(path, body) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const apiBase = await getApiBase();
+  const res = await fetch(`${apiBase}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
