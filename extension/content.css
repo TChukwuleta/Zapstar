@@ -2,18 +2,29 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f7931a;
-  color: #fff;
-  border: none;
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1px solid #30363d;
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
-.zs-zap-btn:hover { background: #e08414; }
+.zs-zap-btn:hover { background: #30363d; border-color: #8b949e; }
 
 .zs-zap-wrapper { margin-top: 8px; }
+
+.zs-zap-wrapper-sidebar {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #30363d;
+}
+.zs-zap-wrapper-sidebar .zs-zap-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 8px 12px;
+}
 
 .zs-zap-icon {
   position: absolute;
@@ -77,16 +88,16 @@
 
 .zs-preset-btn {
   flex: 1;
-  background: #f7931a;
-  color: #fff;
-  border: none;
+  background: #21262d;
+  color: #f0f6fc;
+  border: 1px solid #30363d;
   border-radius: 6px;
   padding: 8px 4px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
-.zs-preset-btn:hover { background: #e08414; }
+.zs-preset-btn:hover { background: #30363d; border-color: #8b949e; }
 
 .zs-custom-row { display: flex; gap: 8px; width: 100%; }
 
@@ -114,14 +125,18 @@
 }
 
 .zs-copy-btn {
-  background: #eaeef2;
+  background: #eaeef2 !important;
+  color: #24292f !important;
   border: none;
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   width: 100%;
+  opacity: 1 !important;
 }
+.zs-copy-btn:hover { background: #d0d7de !important; }
 
 .zs-status { font-size: 13px; font-weight: 600; margin: 0; text-align: center; }
 .zs-error { color: #cf222e; }

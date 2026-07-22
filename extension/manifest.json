@@ -3,11 +3,6 @@
   "name": "Zapstar",
   "version": "0.1.0",
   "description": "Zap sats to GitHub repos and contributors you appreciate, via Lightning.",
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
   "permissions": [],
   "host_permissions": [
     "https://api.zapstar.app/*",
