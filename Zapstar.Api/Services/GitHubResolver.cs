@@ -21,7 +21,7 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
         if (cache.TryGetValue(cacheKey, out TipTarget? cached) && cached is not null)
             return cached;
 
-        var result = await ResolveRepoInternalAsync(owner, repo, ct);
+        var result = await ResolveRepoInternal(owner, repo, ct);
         cache.Set(cacheKey, result, CacheTtl);
         return result;
     }
@@ -37,7 +37,7 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
         return result;
     }
 
-    private async Task<TipTarget> ResolveRepoInternalAsync(string owner, string repo, CancellationToken ct)
+    private async Task<TipTarget> ResolveRepoInternal(string owner, string repo, CancellationToken ct)
     {
         foreach (var branch in CandidateBranches)
         {
@@ -95,11 +95,7 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
                 }
             }
         }
-        catch
-        {
-            // Malformed YAML - treat as "no lightning key found" rather than erroring the request.
-        }
-
+        catch { }
         return null;
     }
 
@@ -116,7 +112,6 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
         {
             return new TipTarget { HasLightning = true, Address = readmeCandidate, Source = "profile-readme", DisplayName = username };
         }
-
         return new TipTarget { HasLightning = false, DisplayName = username };
     }
 
@@ -139,7 +134,6 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
         {
             logger.LogDebug(ex, "Bio lookup failed for {Username}", username);
         }
-
         return null;
     }
 
@@ -162,7 +156,6 @@ public class GitHubResolver(HttpClient http, ILnurlResolver lnurlResolver, IMemo
                 logger.LogDebug(ex, "Profile README lookup failed for {Username} on {Branch}", username, branch);
             }
         }
-
         return null;
     }
 }

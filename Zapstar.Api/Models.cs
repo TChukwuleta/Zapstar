@@ -5,7 +5,7 @@ public record TipTarget
 {
     public bool HasLightning { get; init; }
     public string? Address { get; init; }
-    public string? Source { get; init; } // "funding.yml" | "bio" | "profile-readme"
+    public string? Source { get; init; }
     public string? DisplayName { get; init; }
 }
 

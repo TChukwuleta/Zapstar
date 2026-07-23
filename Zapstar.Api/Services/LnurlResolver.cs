@@ -91,7 +91,6 @@ public class LnurlResolver(HttpClient http, ILogger<LnurlResolver> logger) : ILn
 
         var (user, domain) = (parts[0], parts[1]);
         var wellKnownUrl = $"https://{domain}/.well-known/lnurlp/{user}";
-
         try
         {
             var resp = await http.GetAsync(wellKnownUrl, ct);
@@ -104,7 +103,6 @@ public class LnurlResolver(HttpClient http, ILogger<LnurlResolver> logger) : ILn
             {
                 return null;
             }
-
             return new LnurlPayResponse
             {
                 Callback = callbackEl.GetString()!,
